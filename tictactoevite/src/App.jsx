@@ -5,6 +5,8 @@ import './App.css'
 
 import GridLine from './components/GridLine';
 import GridBox from "./components/GridBox";
+import WinnerLine from "./components/WinnerLine";
+import GameInfo from './components/GameInfo';
 
 const positions = [
   [-1.2, 2.4, 0],
@@ -18,12 +20,40 @@ const positions = [
   [3.6, -2.4, 0],
  ];
 
+function findWinner(board) {
+  let winningCombinations = [
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    [0, 4, 8],
+    [2, 4, 6],
+  ];
+
+  for (let i = 0; i < winningCombinations.length; i++) {
+    const [a, b, c] = winningCombinations[i];
+    if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+      return [board[a], winningCombinations[i]];
+    }
+  }
+  return [null, null];
+};
+
 function App() {
   const [gameBoard, setGameBoard] = useState(Array(9).fill(null));
   const [nextTurn, setNextTurn] = useState(true);
+  const [winner, positionIndices] = findWinner(gameBoard);
 
+  function resetGameBoard() {
+    setGameBoard(Array(9).fill(null));
+  };
+  
   function handleClick(i) {
     const boardCopy = [...gameBoard];
+  
+    if(winner || boardCopy[i]) {return;}
     
     boardCopy[i] = nextTurn ? "Sphere" : "Cube";
     setGameBoard(boardCopy);
@@ -55,20 +85,24 @@ function App() {
         <GridLine position={[1.2, -1.2, 0]} rotation={[0, 0, Math.PI / 2]}/>
         <GridLine position={[1.2, 1.2, 0]} rotation={[0, 0, Math.PI / 2]}/>
 
-        {positions.map((gridBox, idx) => {
+        {positions.map((gridBox, index) => {
           return (
             <GridBox
-              key={idx}
-              shape={gameBoard[idx]}
+              key={index}
+              shape={gameBoard[index]}
               position={gridBox}
-              handleClick={() => handleClick(idx)}
-              winner={null}
+              handleClick={() => handleClick(index)}
+              winner={winner}
             />
           )
         })}
+        {winner ? <WinnerLine positions={positions} indices={positionIndices}/> : null}
+        
       </Canvas>
+      <GameInfo gameBoard={gameBoard} nextTurn={nextTurn} winner={winner} resetGameBoard={resetGameBoard}/>
+      
     </>
   )
 };
 
-export default App;
+export default React.memo(App);
